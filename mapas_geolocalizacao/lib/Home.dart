@@ -16,6 +16,20 @@ class _HomeState extends State<Home> {
     _controller.complete(googleMapController);
   }
 
+  _movimentarCamera() async{
+    GoogleMapController googleMapController = await _controller.future;
+    googleMapController.animateCamera(
+      CameraUpdate.newCameraPosition(
+          CameraPosition(
+              target: LatLng(-23.701617847651825, -46.69866983421911),
+              zoom: 19,
+              tilt: 30,
+              bearing: 30
+          )
+      )
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -33,6 +47,11 @@ class _HomeState extends State<Home> {
         ),
         onMapCreated: _onMapCreated,
       ),
+      floatingActionButton: FloatingActionButton(
+        onPressed: _movimentarCamera,
+        child: Icon(Icons.done),
+      ),
+      floatingActionButtonLocation: FloatingActionButtonLocation.startTop,
     );
   }
 }
