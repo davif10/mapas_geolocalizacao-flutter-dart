@@ -1,6 +1,7 @@
 import 'dart:async';
 
 import 'package:flutter/material.dart';
+import 'package:geolocator/geolocator.dart';
 import 'package:google_maps_flutter/google_maps_flutter.dart';
 class Home extends StatefulWidget {
 
@@ -13,6 +14,11 @@ class _HomeState extends State<Home> {
   //-23.706150624867185, -46.688411752494154 estacao
   //-23.706360904523923, -46.70196160567839 hospital
   Completer<GoogleMapController> _controller = Completer();
+  CameraPosition _posicaoCamera = CameraPosition(
+      target: LatLng(-23.706150624867185, -46.688411752494154),
+      zoom: 18,
+      tilt: 30,
+      bearing: 30);
   Set<Marker> _marcadores ={};
   Set<Polygon> _polygons ={};
   Set<Polyline> _polylines ={};
@@ -26,12 +32,7 @@ class _HomeState extends State<Home> {
     GoogleMapController googleMapController = await _controller.future;
     googleMapController.animateCamera(
       CameraUpdate.newCameraPosition(
-          CameraPosition(
-              target: LatLng(-23.706150624867185, -46.688411752494154),
-              zoom: 15,
-              tilt: 30,
-              bearing: 30
-          )
+          _posicaoCamera
       )
     );
   }
@@ -116,9 +117,107 @@ class _HomeState extends State<Home> {
 
   }
 
+  _recuperarLocalizacaoAtual() async{
+    Position position = await Geolocator().getCurrentPosition(
+      desiredAccuracy: LocationAccuracy.high
+    );
+    setState(() {
+      _posicaoCamera = CameraPosition(
+          target: LatLng(position.latitude, position.longitude),
+          zoom: 18,
+          tilt: 30,
+          bearing: 30);
+      _movimentarCamera();
+    });
+
+    //print("Localização atual: ${position}");
+  }
+
+  _adicionarListenerLocalizacao(){
+    var geolocator = Geolocator();
+    var locationOptions = LocationOptions(
+      accuracy: LocationAccuracy.high,
+      distanceFilter: 10
+    );
+    geolocator.getPositionStream(locationOptions).listen((position) {
+      Marker marcadorUsuario = Marker(
+          markerId: MarkerId("marcador-usuário"),
+          position: LatLng(position.latitude, position.longitude),
+          infoWindow: InfoWindow(
+              title: "Meu Local"
+          ),
+          icon: BitmapDescriptor.defaultMarkerWithHue(
+              BitmapDescriptor.hueMagenta
+          ),
+          rotation: 45,
+          onTap: (){
+            print("Meu Local");
+          }
+      );
+      setState(() {
+        _marcadores.add(marcadorUsuario);
+        _posicaoCamera = CameraPosition(
+            target: LatLng(position.latitude, position.longitude),
+            zoom: 18,
+            tilt: 30,
+            bearing: 30);
+        _movimentarCamera();
+      });
+    });
+  }
+
+  _recuperarLocalParaEndereco() async{
+    List<Placemark> listaEnderecos = await Geolocator()
+        .placemarkFromAddress("Av. Paulista, 1372");
+    print("Total: ${listaEnderecos.length}");
+    if(listaEnderecos != null && listaEnderecos.length > 0){
+      Placemark endereco = listaEnderecos[0];
+      String resultado;
+      resultado = "\n administrativeArea ${endereco.administrativeArea}"
+          "\n subAdministrativeArea ${endereco.subAdministrativeArea}"
+          "\n locality ${endereco.locality}"
+          "\n subLocality ${endereco.subLocality}"
+          "\n thoroughfare ${endereco.thoroughfare}"
+          "\n subThoroughfare ${endereco.subThoroughfare}"
+          "\n postalCode ${endereco.postalCode}"
+          "\n country ${endereco.country}"
+          "\n isoCountryCode ${endereco.isoCountryCode}"
+          "\n position ${endereco.position}";
+
+      print("Resultado: ${resultado}");
+    }
+  }
+
+  _recuperarLocalParaLatLong() async{
+    List<Placemark> listaEnderecos = await Geolocator()
+        .placemarkFromCoordinates(-23.562515598559266, -46.654716073262186);
+
+    print("Total: ${listaEnderecos.length}");
+    if(listaEnderecos != null && listaEnderecos.length > 0){
+      Placemark endereco = listaEnderecos[0];
+      String resultado;
+      resultado = "\n administrativeArea ${endereco.administrativeArea}"
+          "\n subAdministrativeArea ${endereco.subAdministrativeArea}"
+          "\n locality ${endereco.locality}"
+          "\n subLocality ${endereco.subLocality}"
+          "\n thoroughfare ${endereco.thoroughfare}"
+          "\n subThoroughfare ${endereco.subThoroughfare}"
+          "\n postalCode ${endereco.postalCode}"
+          "\n country ${endereco.country}"
+          "\n isoCountryCode ${endereco.isoCountryCode}"
+          "\n position ${endereco.position}";
+
+      print("Resultado: ${resultado}");
+    }
+  }
+
   @override
   void initState() {
-    _carregarMarcadores();
+    //_carregarMarcadores();
+    //_recuperarLocalizacaoAtual();
+    //_adicionarListenerLocalizacao();
+    // _recuperarLocalParaEndereco();
+    _recuperarLocalParaLatLong();
     super.initState();
   }
 
@@ -134,12 +233,13 @@ class _HomeState extends State<Home> {
           target: LatLng(
               -23.706150624867185, -46.688411752494154
           ),
-          zoom: 15
+          zoom: 18
         ),
         onMapCreated: _onMapCreated,
         markers: _marcadores,
-        polygons: _polygons,
-        polylines: _polylines,
+        //polygons: _polygons,
+        //polylines: _polylines,
+        myLocationEnabled: true,
       ),
       floatingActionButton: FloatingActionButton(
         onPressed: _movimentarCamera,
