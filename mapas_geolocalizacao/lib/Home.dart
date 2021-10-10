@@ -14,6 +14,9 @@ class _HomeState extends State<Home> {
   //-23.706360904523923, -46.70196160567839 hospital
   Completer<GoogleMapController> _controller = Completer();
   Set<Marker> _marcadores ={};
+  Set<Polygon> _polygons ={};
+  Set<Polyline> _polylines ={};
+
 
   _onMapCreated(GoogleMapController googleMapController){
     _controller.complete(googleMapController);
@@ -66,10 +69,51 @@ class _HomeState extends State<Home> {
 
     marcadoresLocal.add(marcadorEstacao);
     marcadoresLocal.add(marcadorHospital);
+    
+    Set<Polygon> listaPolygons ={};
+    Polygon polygon = Polygon(
+        polygonId: PolygonId("polygon1"),
+      fillColor: Colors.green,
+      strokeColor: Colors.red,
+      strokeWidth: 10,
+      points: [
+        LatLng(-23.701617847651825, -46.69866983421911),
+        LatLng(-23.706150624867185, -46.688411752494154),
+        LatLng(-23.706360904523923, -46.70196160567839)
+      ],
+      consumeTapEvents: true,
+      onTap: (){
+          print("Clicado na área.");
+      },
+      zIndex: 0 //Define prioridade de exibição
+    );
+    listaPolygons.add(polygon);
 
+    Set<Polyline> listaPolylines ={};
+    Polyline polyline = Polyline(
+        polylineId: PolylineId("polyline"),
+      color: Colors.amber,
+      width: 15,
+      startCap: Cap.roundCap,
+      endCap: Cap.roundCap,
+      jointType: JointType.bevel,
+      consumeTapEvents: true,
+      points: [
+        LatLng(-23.707070872325318, -46.68928769901425),
+        LatLng(-23.711399309581363, -46.69870649898201),
+        LatLng(-23.707896921057046, -46.705093961029114)
+      ],
+      onTap: (){
+          print("Clicado na linha!");
+      }
+    );
+    listaPolylines.add(polyline);
     setState(() {
       _marcadores = marcadoresLocal;
+      _polygons = listaPolygons;
+      _polylines = listaPolylines;
     });
+
   }
 
   @override
@@ -94,6 +138,8 @@ class _HomeState extends State<Home> {
         ),
         onMapCreated: _onMapCreated,
         markers: _marcadores,
+        polygons: _polygons,
+        polylines: _polylines,
       ),
       floatingActionButton: FloatingActionButton(
         onPressed: _movimentarCamera,
